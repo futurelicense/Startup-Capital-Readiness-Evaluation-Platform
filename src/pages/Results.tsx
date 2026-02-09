@@ -118,7 +118,83 @@ const Results = () => {
   }));
 
   const handleDownloadReport = () => {
-    alert('Report download functionality would be implemented here.');
+    const badge = getOverallScoreBadge();
+    const scoreColor = overallScore >= 80 ? '#059669' : overallScore >= 60 ? '#d97706' : '#dc2626';
+    const statusColors: Record<string, string> = {
+      good: '#059669',
+      warning: '#d97706',
+      bad: '#dc2626',
+    };
+
+    const scoreRows = scoreData
+      .map(
+        (item) =>
+          `<tr><td>${item.category}</td><td style="font-weight:600;color:${getScoreColor(item.score)}">${item.score}/100</td></tr>`
+      )
+      .join('');
+
+    const recSections = recommendations
+      .map(
+        (rec) => `
+      <div style="margin-bottom:1rem;padding:1rem;border-radius:0.5rem;border:1px solid ${statusColors[rec.status]}40;background:${statusColors[rec.status]}08">
+        <h3 style="margin:0 0 0.5rem;font-size:1rem;color:#334155">${rec.title}</h3>
+        <ul style="margin:0;padding-left:1.25rem">
+          ${rec.recommendations.map((r) => `<li style="margin:0.25rem 0">${r}</li>`).join('')}
+        </ul>
+      </div>`
+      )
+      .join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Capital Readiness Report - ${companyName.replace(/[<>"']/g, '')}</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 720px; margin: 0 auto; padding: 2rem; color: #1e293b; line-height: 1.6; }
+    h1 { font-size: 1.75rem; margin: 0 0 0.25rem; color: #0f172a; }
+    .meta { font-size: 0.875rem; color: #64748b; margin-bottom: 1.5rem; }
+    .score-box { display: inline-block; padding: 1rem 1.5rem; border-radius: 0.5rem; background: #f8fafc; border: 2px solid ${scoreColor}; margin: 1rem 0; }
+    .score-num { font-size: 2.5rem; font-weight: 700; color: ${scoreColor}; }
+    .badge { display: inline-block; margin-top: 0.5rem; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; }
+    h2 { font-size: 1.25rem; margin: 1.5rem 0 0.75rem; color: #0f172a; }
+    table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; }
+    th, td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    th { font-size: 0.75rem; text-transform: uppercase; color: #64748b; }
+    .footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; font-size: 0.75rem; color: #64748b; }
+    @media print { body { padding: 1rem; } }
+  </style>
+</head>
+<body>
+  <h1>Capital Readiness Report</h1>
+  <p class="meta"><strong>${companyName.replace(/[<>"']/g, '')}</strong> · Generated ${new Date().toLocaleDateString('en-US', { dateStyle: 'long' })}</p>
+  <div class="score-box">
+    <span class="score-num">${overallScore}</span><span style="color:#64748b">/100</span>
+    <div><span class="badge" style="background:${badge.className.includes('emerald') ? '#d1fae5' : badge.className.includes('amber') ? '#fef3c7' : '#fee2e2'};color:${badge.className.includes('emerald') ? '#065f46' : badge.className.includes('amber') ? '#92400e' : '#991b1b'}">${badge.text}</span></div>
+  </div>
+  <h2>Score breakdown</h2>
+  <table>
+    <thead><tr><th>Dimension</th><th>Score</th></tr></thead>
+    <tbody>${scoreRows}</tbody>
+  </table>
+  <h2>Recommendations</h2>
+  ${recSections}
+  <h2>Next steps</h2>
+  <p>Based on your score of ${overallScore}, focus on: strengthening ecosystem connections, refining market strategy, and improving operational documentation where relevant.</p>
+  <div class="footer">
+    Startup Capital Readiness Platform · This report is for reference. Use your browser’s Print (or Save as PDF) to export.
+  </div>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Capital-Readiness-Report-${companyName.replace(/[^a-zA-Z0-9-_]/g, '-').slice(0, 40)}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const operationalScore = scoreData.find((s) => s.category === 'Operational Readiness');
